@@ -45,3 +45,51 @@ resource "azurerm_virtual_network_gateway" "vpn-gateway" {
   }
 
 }
+
+resource "azurerm_point_to_site_vpn_gateway" "P2S" {
+  name                        = "P2S-vpn"
+  location                    = azurerm_resource_group.rg.location
+  resource_group_name         = azurerm_resource_group.rg.name
+
+    connection_configuration {
+      name = "connection-configuration"
+
+      vpn_client_address_pool {
+        address_prefixes = [ "192.100.20.0/24" ]
+
+      }
+    }
+  scale_unit                  = 1       # 1 scale unit has 500 concurrent connections
+  virtual_hub_id = azurerm_virtual_hub.virtual-hub.id
+  vpn_server_configuration_id = azurerm_vpn_server_configuration.vpn-server-config.id
+  
+}
+
+resource "azurerm_virtual_hub" "virtual-hub" {
+  name = "virtual-hub"
+  location = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+
+  virtual_wan_id = azurerm_virtual_wan.virual-wan.id
+  address_prefix = "10.0.0.0/23"
+
+}
+resource "azurerm_virtual_wan" "virual-wan" {
+  name = "virtual-wan"
+  location = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+}
+
+resource "azurerm_vpn_server_configuration" "vpn-server-config" {
+  name = "vpn-server-config"
+  location = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+
+  vpn_authentication_types = ["Certificate"]
+    client_root_certificate {
+    name = "root-cert"
+    public_cert_data = # will create certificate later
+    }
+  
+
+}
